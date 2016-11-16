@@ -20,7 +20,7 @@ import socket
 import addict
 import json
 import requests
-import logging
+# import logging
 from daemon import runner
 
 
@@ -37,13 +37,13 @@ def get_current_ip():
 def dnspod_api(addr, data):
     response = requests.post(addr, data=data)
     if not response.ok:
-        logging.info('REQ-%s:%s:' % (addr, response.content))
-        return None
+        print('REQ-%s:%s:' % (addr, response.content))
+        return
 
     content = response.json()
     if not content.get('status') or content['status']["code"] != "1":
-        logging.info('REQ-%s:%s:' % (addr, response.content))
-        return None
+        print('REQ-%s:%s:' % (addr, response.content))
+        return
     return content
 
 
@@ -65,24 +65,32 @@ def update_dnspod_record(domain_config, current_ip=None):
     }
     result = dnspod_api(DNSPOD_CONFIG.addr.record_list, data=data)
     if not result:
-        return
+        data = {
+            'login_token': DNSPOD_CONFIG.token,
+            'record_type': domain_config.record_type or 'A',
+            'domain': domain_config.domain,
+            'sub_domain': domain_config.sub_domain,
+            'value': current_ip,
+            'record_line': domain_config.record_line,
+            'format': 'json'
+        }
+        dnspod_api(DNSPOD_CONFIG.addr.record_create, data=data)
 
-    for item in result['records']:
-        if item['name'] == domain_config.sub_domain and item['value'] != current_ip:
-            update_data = {
-                'login_token': DNSPOD_CONFIG.token,
-                'domain': domain_config.domain,
-                'sub_domain': domain_config.sub_domain,
-                'record_id': item['id'],
-                'value': current_ip,
-                'record_line': domain_config.record_line,
-                'format': 'json'
-            }
-            dnspod_api(DNSPOD_CONFIG.addr.record_ddns, data=update_data)
-            break
-        else:
-            logging.info('domain:%s.%s not found in dnspod' %
-                         (domain_config.sub_domain, domain_config.domain))
+    else:
+        for item in result['records']:
+            if item['name'] == domain_config.sub_domain and item['value'] != current_ip:
+                data = {
+                    'login_token': DNSPOD_CONFIG.token,
+                    'domain': domain_config.domain,
+                    'sub_domain': domain_config.sub_domain,
+                    'record_id': item['id'],
+                    'value': current_ip,
+                    'record_line': domain_config.record_line,
+                    'format': 'json'
+                }
+                dnspod_api(DNSPOD_CONFIG.addr.record_ddns, data=data)
+                break
+
 
 
 def main_loop():
@@ -91,7 +99,7 @@ def main_loop():
         current_ip = get_current_ip()
         for item in DNSPOD_CONFIG['domains']:
             update_dnspod_record(item, current_ip)
-        time.sleep(DNSPOD_CONFIG.system.sleep_minutes)
+        time.sleep(DNSPOD_CONFIG.system.sleep_minutes * 60)
 
 
 class DNSPodDaemon(object):
