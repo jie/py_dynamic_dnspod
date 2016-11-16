@@ -21,6 +21,7 @@ import addict
 import json
 import requests
 # import logging
+from datetime import datetime
 from daemon import runner
 
 
@@ -56,6 +57,7 @@ def load_config():
 
 
 def update_dnspod_record(domain_config, current_ip=None):
+    print('%s::period_tick' % datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     global DNSPOD_CONFIG
     data = {
         'login_token': DNSPOD_CONFIG.token,
@@ -116,7 +118,13 @@ class DNSPodDaemon(object):
 
 
 def main():
-    arguments = docopt.docopt(__doc__, version='0.1.1rc')
+
+    try:
+        arguments = docopt.docopt(__doc__)
+    except docopt.DocoptExit:
+        print(__doc__.strip())
+        return
+
     dnspod_daemon = DNSPodDaemon(arguments)
     action = arguments['-d']
     load_config()
@@ -126,7 +134,7 @@ def main():
             daemon_runner = runner.DaemonRunner(dnspod_daemon)
             daemon_runner.do_action()
         else:
-            print('error')
+            print(print __doc__.strip())
             return
     else:
         dnspod_daemon.run()
