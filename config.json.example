@@ -1,0 +1,21 @@
+{
+    "system": {
+        "sleep_minutes": 10
+    },
+
+    "logger": {
+        "path": null,
+        "level": "error",
+        "format": "'%(asctime)s - %(name)s - %(levelname)s - %(message)s'"
+    },
+    "addr": {
+        "record_list": "https://dnsapi.cn/Record.List",
+        "record_ddns": "https://dnsapi.cn/Record.Ddns"
+    },
+    "token": "",
+    "domains": [{
+        "domain": "",
+        "sub_domain": "",
+        "record_line": "默认"
+    }]
+}
