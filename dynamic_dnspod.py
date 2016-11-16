@@ -134,7 +134,7 @@ def main():
             daemon_runner = runner.DaemonRunner(dnspod_daemon)
             daemon_runner.do_action()
         else:
-            print(print __doc__.strip())
+            print(__doc__.strip())
             return
     else:
         dnspod_daemon.run()
